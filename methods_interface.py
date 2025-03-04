@@ -5,16 +5,23 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from random import randint
+
+
 class SolutionMemoryForLinearSystem:
+    """
+    Класс, который хранит информацию о работе одного численного метода, 
+    с единственным вариантом приближения
+    """
+
     def __init__(self, path_to_save: str = "./"):
         self.solutions_list = list()  # Inside there is a LIST of NORMALS!
-        self.path_to_save_information = path_to_save
     
     def get_dictionary(self):
         return {
             "solutions": self.solutions_list,
-            "precision_relatively_last_solution": [self.get_norma(x, self.solutions_list[-1]) for x in self.solutions_list],
-            "precision_relatively_zero_solution": [self.get_norma(x, self.solutions_list[0]) for x in self.solutions_list],
+            "precision_relatively_last_solution": [self.get_norma(x - self.solutions_list[-1]) for x in self.solutions_list],
+            "precision_relatively_zero_solution": [self.get_norma(x - self.solutions_list[0]) for x in self.solutions_list],
             "iteration_num": [i + 1 for i in range(len(self.solutions_list))]
         }
 
@@ -25,23 +32,32 @@ class SolutionMemoryForLinearSystem:
         self.solutions_list.clear()
 
     @staticmethod
-    def get_norma(x_i, x_precised):
-        # return max(x_i - x_precised)
-        # return sum(abs(x_i - x_precised))
-        return (sum(map(lambda x: x ** 2, x_i - x_precised))) ** 0.5
+    def get_norma(x_i):
+        """Получение нормы вектора (евклидова норма)"""
+        # return max(x_i)
+        # return sum(abs(x_i))
+        return (sum(map(lambda x: x ** 2, x_i))) ** 0.5
+    
+    def get_result(self):
+        """Получение последнего расчёта"""
+        return self.solutions_list[-1]
     
 
     def show_plot(self):
+        """Показать график N(|x0-x_i|). x0 - начальное приближение, x_i - i-ое приближение"""
         data_frame = pd.DataFrame(self.get_dictionary())
         data_frame.plot(title="Precise", x="iteration_num", y="precision_relatively_zero_solution")
         plt.show()
 
 
 class AnyNumericalMethod:
+    """Представление любого численного метода (родитель, от которого все методы наследуются)"""
     def __init__(self, A_matrix, b_vector, epsilon, debug: bool = False):
         """
         A_matrix: матрица СЛАУ
         b_vector: вектор b
+        epsilon: точность системы
+        debug: режим отладки (вывод всех действий с матрицами/векторами)
         """
         self.A_matrix = A_matrix
         self.b_vector = b_vector
@@ -97,6 +113,52 @@ class AnyNumericalMethod:
         """Критерии сходимости"""
         pass
     
-    def numerical_solution(self):
-        """Расчёт до заданной точности epsilon. Не забывай сохранять промежуточные этапы!"""
+    def numerical_solution(self, x_0 = None):
+        """
+            x_0: Первое приближение, по умолчанию -- нулевой вектор (np.array!).
+            Расчёт до заданной точности epsilon. 
+            Не забывай сохранять промежуточные этапы
+        """
         self.past_solutions.clear_history()
+    
+    def x_0_random(self, from_value: int = -10, to_value: int = 10):
+        """Создание рандомного вектора x_0 (первого приближения к решению)"""
+        return np.array([randint(from_value, to_value) for _ in range(self.A_matrix.shape[0])])
+    
+    def numerical_solution_with_many_random_x_0(self, precise_vector, amount_of_vectors: int = 10):
+        """
+        Решение СЛАУ, используя множество различных псевдо-случайных векторов.
+        Выхлоп - график, на котором отображается зависимость N(S), где
+        N - это количество итераций
+        S - это норма разности точного решения (precise_vector) и вектора начального приближения (x_0)
+        """
+
+        result = {
+            "N": list(),
+            "S": list()
+        }
+        need_debug = self.debug
+        self.debug = False
+        random_vectors = sorted(
+            [
+                self.x_0_random(i * 3, i * 3)
+                for i in range(1, amount_of_vectors)
+            ], 
+            key=lambda x: -SolutionMemoryForLinearSystem.get_norma(x - precise_vector)
+        )
+        
+        for x_0 in random_vectors:
+
+            self.debug = False
+            self.numerical_solution(x_0=x_0)
+            n = len(self.past_solutions.solutions_list)
+
+            if need_debug: print("[DEBUG] x_0 = ", x_0, "|x_0 - x*| =", SolutionMemoryForLinearSystem.get_norma(x_0 - precise_vector), "N =", n)
+            result["N"].append(n)
+            result["S"].append(SolutionMemoryForLinearSystem.get_norma(precise_vector - x_0))
+
+        self.debug = need_debug
+
+        data_frame = pd.DataFrame(result)
+        data_frame.plot(title="N(S)", x="S", y="N")
+        plt.show()

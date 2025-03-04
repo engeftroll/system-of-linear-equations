@@ -47,17 +47,21 @@ class GaussZeidelMethod(AnyNumericalMethod):
         if self.debug: print("[DEBUG] Is okay to use it?", all(abs_eigen_values_checked))
         return all(abs_eigen_values_checked)
     
-    def numerical_solution(self):
+    def numerical_solution(self, x_0 = None):
         """
         Easy iteration solution:
-        1. Let x(0) = (0, 0, ..., 0)
-        2. Use formula (L+D)-inv * b - (L+D)-inv * U * x_i
-        3. Use formula until ||x(k) - x(k+1)|| < epsilon
+        1. Use formula (L+D)-inv * b - (L+D)-inv * U * x_i
+        2. Use formula until ||x(k) - x(k+1)|| < epsilon
         """
         super().numerical_solution()
     
         if self.debug: print("[DEBUG] NUMERICAL SOLUTION")
-        x_i = np.array([0] * self.A_matrix.shape[0])
+        
+        if x_0 is None: 
+            x_i = np.array([0] * self.A_matrix.shape[0])
+        else:
+            x_i = x_0.copy()
+
         L_plus_D_inv = np.linalg.inv(self.L_matrix + self.D_matrix)
         
         x_next = L_plus_D_inv.dot(self.b_vector) - L_plus_D_inv.dot(self.U_matrix).dot(x_i)
@@ -65,10 +69,10 @@ class GaussZeidelMethod(AnyNumericalMethod):
         i = 1
         while abs(sum(x_next - x_i)) >= self.epsilon / 10:
             if self.debug: print(f"[DEBUG] Iter {i} was:", x_i)
-            # if self.debug: print(f"[DEBUG] delta_x:", x_next - x_i)
+
             self.past_solutions.save_iteration(x_i)
             x_i = x_next.copy()
-            x_next = L_plus_D_inv.dot(self.b_vector) - L_plus_D_inv.dot(self.U_matrix).dot(x_i)
 
+            x_next = L_plus_D_inv.dot(self.b_vector) - L_plus_D_inv.dot(self.U_matrix).dot(x_i)
             i += 1
         return x_i

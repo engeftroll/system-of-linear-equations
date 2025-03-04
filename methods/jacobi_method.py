@@ -62,28 +62,31 @@ class JacobiMethod(AnyNumericalMethod):
                 return self.__check_jacobi_criterion__()
         return False
     
-    def numerical_solution(self):
+    def numerical_solution(self, x_0 = None):
         """
         Easy iteration solution:
-        1. Let x(0) = (0, 0, ..., 0)
-        2. Use formula
-        3. Use formula until ||x(k) - x(k+1)|| < epsilon
+        1. Use formula (check ReadMe.md)
+        2. Use formula until ||x(k) - x(k+1)|| < epsilon
         """
         super().numerical_solution()
 
         if self.debug: print("[DEBUG] NUMERICAL SOLUTION")
         D_inv = np.linalg.inv(self.D_matrix)
 
-        x_i = np.array([0] * self.A_matrix.shape[0])
+        if x_0 is None: 
+            x_i = np.array([0] * self.A_matrix.shape[0])
+        else:
+            x_i = x_0.copy()
+
+
         x_next = D_inv.dot(self.b_vector - (self.L_matrix + self.U_matrix).dot(x_i))
 
         i = 1
         while abs(sum(x_next - x_i)) > self.epsilon:
             if self.debug: print(f"[DEBUG] Iter {i} was:", x_i)
-            # if self.debug: print(f"[DEBUG] delta_x:", x_next - x_i)
             self.past_solutions.save_iteration(x_i)
+            
             x_i = x_next.copy()
             x_next = D_inv.dot(self.b_vector - (self.L_matrix + self.U_matrix).dot(x_i))
-
             i += 1
         return x_i

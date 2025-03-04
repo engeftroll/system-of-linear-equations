@@ -45,37 +45,34 @@ class EasyIterations(AnyNumericalMethod):
 
             tau_to_check -= delta_t
     
-    def numerical_solution(self):
+    def numerical_solution(self, x_0 = None):
         """
         Easy iteration solution:
-        1. Let x(0) = (0, 0, ..., 0)
-        2. Use formula x(k+1) =  (E - tau * A)*x(k) + tau * b
-        3. Use formula until ||x(k) - x(k+1)|| < epsilon
+        1. Use formula x(k+1) =  (E - tau * A)*x(k) + tau * b
+        2. Use formula until ||x(k) - x(k+1)|| < epsilon
         """
         super().numerical_solution()
 
         if self.debug: print("[DEBUG] NUMERICAL SOLUTION")
         zero_matrix = np.eye(*self.A_matrix.shape)
 
-        x_i = self.tau * np.transpose(self.b_vector)
-        x_next = np.array([0] * self.A_matrix.shape[0])
+        if x_0 is None: 
+            x_i = np.array([0] * self.A_matrix.shape[0])
+        else:
+            x_i = x_0.copy()
 
-        get_norma = sum
+        x_next = self.tau * np.transpose(self.b_vector)
 
         if self.debug: print("[DEBUG] x_0 =", x_i)
         if self.debug: print("[DEBUG] x_1 =", x_next)
-        if self.debug: print("[DEBUG] x_1 - x_0 =", x_next - x_i)
-        if self.debug: print("[DEBUG] sum(x_0) =", sum(x_i))
-        if self.debug: print("[DEBUG] sum(x_1) =", sum(x_next))
-        if self.debug: print("[DEBUG] x_1 - x_0 =", sum(x_next - x_i))
-        if self.debug: print("[DEBUG]")
+
         i = 1
         while abs(sum(x_next - x_i)) > self.epsilon:
             if self.debug: print(f"[DEBUG] Iter {i} was:", x_i)
             self.past_solutions.save_iteration(x_i)
+
             x_i = x_next.copy()
             x_next = (zero_matrix - self.tau * self.A_matrix).dot(x_i) + self.tau * np.transpose(self.b_vector)
-
-
             i += 1
+
         return x_i
