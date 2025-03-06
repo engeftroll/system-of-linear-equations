@@ -67,7 +67,7 @@ class GaussZeidelMethod(AnyNumericalMethod):
         x_next = L_plus_D_inv.dot(self.b_vector) - L_plus_D_inv.dot(self.U_matrix).dot(x_i)
 
         i = 1
-        while abs(sum(x_next - x_i)) >= self.epsilon / 10:
+        while abs(sum(x_next - x_i)) > self.epsilon:
             if self.debug: print(f"[DEBUG] Iter {i} was:", x_i)
 
             self.past_solutions.save_iteration(x_i)

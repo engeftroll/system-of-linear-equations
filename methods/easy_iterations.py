@@ -16,21 +16,16 @@ class EasyIterations(AnyNumericalMethod):
         """
 
         if self.debug: print("[DEBUG] Check conditions of usage")
-        delta_t = 0.001
+
+        delta_t = 0.001  # More accuracy.
         get_norma = get_norma_1
 
-        tau_to_check = 1
-        while tau_to_check > 0:
+        tau_to_check = 0  # Better from 0 to 1.
+        while tau_to_check < 1:
             norma = get_norma(np.eye(*self.A_matrix.shape) - tau_to_check * self.A_matrix, False)
             if norma > 1:
-                # if self.debug: print("[DEBUG] Norma > 1")
-                tau_to_check -= delta_t
+                tau_to_check += delta_t
                 continue
-        
-            if tau_to_check <= 0:
-                print("[WARN] Tau does not exists")
-                return False
-
 
             matrix_for_eigen_values = np.eye(*self.A_matrix.shape) - tau_to_check * self.A_matrix
             # if self.debug: print("[DEBUG] What if tau =", tau_to_check)
@@ -43,7 +38,7 @@ class EasyIterations(AnyNumericalMethod):
                 self.tau = tau_to_check
                 return True
 
-            tau_to_check -= delta_t
+            tau_to_check += delta_t
     
     def numerical_solution(self, x_0 = None):
         """

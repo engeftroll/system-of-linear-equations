@@ -90,22 +90,22 @@ class AnyNumericalMethod:
 
     def count_condition_numbers(self) -> Tuple[float, float, float]:
         """Расчёт трёх чисел обусловленности"""
-        if self.debug: print("[DEBUG] COUNT CONDITION NUMBERS")
+        if self.debug: print("[DEBUG] COUNT CONDITION NUMBERS\n")
         A_matrix_inversed = np.linalg.inv(self.A_matrix)
 
         if self.debug: print("[DEBUG] A-matrix inversed = \n", A_matrix_inversed)
 
         if self.debug: print("[DEBUG] Count via norma_1: ")
         mu_1 = utils.get_norma_1(A_matrix_inversed, self.debug) / utils.get_norma_1(self.A_matrix, self.debug)
-        if self.debug: print("[DEBUG] mu_1 =", mu_1)
+        if self.debug: print("\n[DEBUG] mu_1 =", mu_1, "\n")
 
         if self.debug: print("[DEBUG] Count via norma_2: ")
         mu_2 = utils.get_norma_2(A_matrix_inversed, self.debug) / utils.get_norma_2(self.A_matrix, self.debug)
-        if self.debug: print("[DEBUG] mu_2 =", mu_2)
+        if self.debug: print("\n[DEBUG] mu_2 =", mu_2, "\n")
 
         if self.debug: print("[DEBUG] Count via norma_3: ")
         mu_3 = utils.get_norma_3(A_matrix_inversed, self.debug) / utils.get_norma_3(self.A_matrix, self.debug)
-        if self.debug: print("[DEBUG] mu_3 =", mu_3)
+        if self.debug: print("\n[DEBUG] mu_3 =", mu_3, "\n")
 
         return (float(mu_1), float(mu_2), float(mu_3))
 
@@ -125,7 +125,7 @@ class AnyNumericalMethod:
         """Создание рандомного вектора x_0 (первого приближения к решению)"""
         return np.array([randint(from_value, to_value) for _ in range(self.A_matrix.shape[0])])
     
-    def numerical_solution_with_many_random_x_0(self, precise_vector, amount_of_vectors: int = 10):
+    def numerical_solution_with_many_random_x_0(self, precise_vector, amount_of_vectors: int = 10, show_all_debug: bool = False):
         """
         Решение СЛАУ, используя множество различных псевдо-случайных векторов.
         Выхлоп - график, на котором отображается зависимость N(S), где
@@ -137,27 +137,29 @@ class AnyNumericalMethod:
             "N": list(),
             "S": list()
         }
-        need_debug = self.debug
-        self.debug = False
+        need_debug = show_all_debug
+        
+        # Creating random vector, where every coordinate from value to value
         random_vectors = sorted(
             [
-                self.x_0_random(i * 3, i * 3)
+                self.x_0_random(i * 3, i * 3)  
                 for i in range(1, amount_of_vectors)
             ], 
             key=lambda x: -SolutionMemoryForLinearSystem.get_norma(x - precise_vector)
         )
-        
-        for x_0 in random_vectors:
 
-            self.debug = False
+        # Stress test
+        # random_vectors = [
+        #     np.array([3931 / 4336, 3357 / 2168, -547 / 1084, 150 / 271])
+        # ]
+
+        for x_0 in random_vectors:
             self.numerical_solution(x_0=x_0)
             n = len(self.past_solutions.solutions_list)
 
-            if need_debug: print("[DEBUG] x_0 = ", x_0, "|x_0 - x*| =", SolutionMemoryForLinearSystem.get_norma(x_0 - precise_vector), "N =", n)
+            if need_debug: print("[DEBUG] x_0 = ", x_0, "\t|x_0 - x*| =", SolutionMemoryForLinearSystem.get_norma(x_0 - precise_vector), f"(N = {n})")
             result["N"].append(n)
             result["S"].append(SolutionMemoryForLinearSystem.get_norma(precise_vector - x_0))
-
-        self.debug = need_debug
 
         data_frame = pd.DataFrame(result)
         data_frame.plot(title="N(S)", x="S", y="N")
