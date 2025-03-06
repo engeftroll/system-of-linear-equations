@@ -4,10 +4,17 @@
 3. Уставший человек убил на это целый день.
 
 ## Установка и запуск
-1. Создайте виртуальное окружение: `python3 -m venv system-of-linear-equations`
-2. Активируйте среду (Linux: `source ./path/to/venv`)
+0. Открыть терминал (Linux: `ctrl + alt + t`; Windows: `win+R`, ввести `cmd`). Перейти в директорию с кодом, используя `cd path/to/repository`.
+1. Создайте виртуальное окружение в : `python3 -m venv system-of-linear-equations`
+2. Активируйте среду (Linux: `source ./path/to/venv`; Windows `читай отдельный блок ниже`)
 
 3. Запуск: `python3 app.py`
+
+## Активация среды на Windows
+0. В терминале Windows (см 0 пункт)
+1. `cd venv\Scripts`
+2. `activate.bat`
+3. `cd ..\..`
 
 
 # Устройство под капотом
@@ -19,3 +26,4 @@
 
 ## [methods/](./methods/ReadMe.md)
 Реализация конкретных численных методов.
+
